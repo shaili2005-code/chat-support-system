@@ -59,9 +59,6 @@ This is a full-stack, real-time chat support application built with a Node.js ba
 │   └── styles.css     # Global styles
 └── .env.example       # Template for frontend environment variables
 
-
----
-
 ## 💾 Database Schema Overview
 
 The application uses MongoDB with Mongoose to structure the data.

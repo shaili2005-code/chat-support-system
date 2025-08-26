@@ -1,0 +1,26 @@
+:root { --bg:#0b1020; --card:#131a2a; --muted:#93A3B8; --brand:#4f46e5; }
+
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#fff}
+.container{max-width:980px;margin:0 auto;padding:24px}
+.card{background:var(--card);border:1px solid #223; border-radius:14px;padding:16px}
+.row{display:flex;gap:16px}
+.col{flex:1}
+input,button,select,textarea{
+  background:#0f1526;color:#fff;border:1px solid #2a3550;border-radius:10px;
+  padding:12px;font-size:14px;outline:none
+}
+button{cursor:pointer}
+button.primary{background:var(--brand);border-color:transparent}
+.tag{font-size:12px;color:#c9d1e7;background:#1b2540;border-radius:999px;padding:4px 10px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.messages{height:56vh;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.msg{max-width:72%;padding:10px 12px;border-radius:12px;line-height:1.3}
+.msg.you{align-self:flex-end;background:#243155;border:1px solid #324268}
+.msg.other{align-self:flex-start;background:#15213d;border:1px solid #223358}
+.timestamp{color:var(--muted);font-size:11px;margin-top:4px}
+.name{font-size:12px;color:#D6E1FF;margin-bottom:4px}
+.footer{display:flex;gap:8px;align-items:center;margin-top:12px}
+hr{border:none;border-top:1px solid #223358;margin:12px 0}
+.center{display:flex;justify-content:center;align-items:center}
+.small{font-size:12px;color:var(--muted)}

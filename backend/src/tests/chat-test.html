@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Support Test Client</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        input, button, textarea {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: scroll;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .message.user {
+            background-color: #e3f2fd;
+            text-align: right;
+        }
+        .message.agent {
+            background-color: #f3e5f5;
+            text-align: left;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .input-group input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Chat Support System - Test Client</h1>
+        
+        <!-- Connection Section -->
+        <div class="section">
+            <h3>📡 Socket Connection</h3>
+            <div class="input-group">
+                <input type="text" id="serverUrl" value="http://localhost:5050" placeholder="Server URL">
+                <button id="connectBtn">Connect</button>
+                <button id="disconnectBtn" disabled>Disconnect</button>
+            </div>
+            <div id="connectionStatus" class="info">Disconnected</div>
+        </div>
+
+        <!-- Session Management -->
+        <div class="section">
+            <h3>🎯 Session Management</h3>
+            <div class="input-group">
+                <input type="text" id="sessionId" placeholder="Session ID (from REST API)">
+                <input type="text" id="userId" value="user123" placeholder="User ID">
+                <input type="text" id="userName" value="John Doe" placeholder="User Name">
+                <button id="joinSessionBtn" disabled>Join Session</button>
+            </div>
+            <div>
+                <label>
+                    <input type="radio" name="userType" value="user" checked> User
+                </label>
+                <label>
+                    <input type="radio" name="userType" value="agent"> Agent
+                </label>
+            </div>
+            <div id="sessionStatus" class="info">Not in session</div>
+        </div>
+
+        <!-- Messaging -->
+        <div class="section">
+            <h3>💬 Send Message</h3>
+            <div class="input-group">
+                <textarea id="messageInput" placeholder="Type your message here..." rows="3"></textarea>
+                <button id="sendMessageBtn" disabled>Send</button>
+            </div>
+        </div>
+
+        <!-- Messages Display -->
+        <div class="section">
+            <h3>📨 Messages</h3>
+            <div id="messages" class="log"></div>
+            <button id="clearMessages">Clear Messages</button>
+        </div>
+
+        <!-- Events Log -->
+        <div class="section">
+            <h3>📋 Events Log</h3>
+            <div id="eventLog" class="log"></div>
+            <button id="clearLog">Clear Log</button>
+        </div>
+
+        <!-- Instructions -->
+        <div class="section">
+            <h3>📚 How to Use</h3>
+            <ol>
+                <li><strong>Create a session first using REST API</strong> (Thunder Client)</li>
+                <li>Copy the <code>sessionId</code> from the REST response</li>
+                <li>Click <strong>Connect</strong> to establish Socket.IO connection</li>
+                <li>Paste the <code>sessionId</code> and click <strong>Join Session</strong></li>
+                <li>Type messages and click <strong>Send</strong></li>
+                <li>Open multiple tabs to simulate different users</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let socket = null;
+        let currentSessionId = null;
+        let isConnected = false;
+
+        // DOM Elements
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const joinSessionBtn = document.getElementById('joinSessionBtn');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const sessionIdInput = document.getElementById('sessionId');
+        const userIdInput = document.getElementById('userId');
+        const userNameInput = document.getElementById('userName');
+        const messageInput = document.getElementById('messageInput');
+        const messagesDiv = document.getElementById('messages');
+        const eventLogDiv = document.getElementById('eventLog');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const sessionStatus = document.getElementById('sessionStatus');
+
+        // Utility function to log events
+        function logEvent(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            eventLogDiv.textContent += logEntry;
+            eventLogDiv.scrollTop = eventLogDiv.scrollHeight;
+            
+            if (type === 'error') {
+                console.error(message);
+            } else {
+                console.log(message);
+            }
+        }
+
+        // Connect to Socket.IO
+        connectBtn.addEventListener('click', () => {
+            const serverUrl = document.getElementById('serverUrl').value;
+            
+            try {
+                socket = io(serverUrl);
+                logEvent('🔄 Connecting to server...', 'info');
+
+                socket.on('connect', () => {
+                    isConnected = true;
+                    connectionStatus.textContent = '✅ Connected';
+                    connectionStatus.className = 'success';
+                    connectBtn.disabled = true;
+                    disconnectBtn.disabled = false;
+                    joinSessionBtn.disabled = false;
+                    logEvent('✅ Connected to server successfully');
+                });
+
+                socket.on('disconnect', () => {
+                    isConnected = false;
+                    connectionStatus.textContent = '❌ Disconnected';
+                    connectionStatus.className = 'error';
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                    joinSessionBtn.disabled = true;
+                    sendMessageBtn.disabled = true;
+                    logEvent('❌ Disconnected from server');
+                });
+
+                socket.on('error', (error) => {
+                    logEvent(`❌ Socket error: ${error.message}`, 'error');
+                });
+
+                socket.on('session_joined', (data) => {
+                    currentSessionId = data.sessionId;
+                    sessionStatus.textContent = `✅ Joined session with ${data.agentName}`;
+                    sessionStatus.className = 'success';
+                    sendMessageBtn.disabled = false;
+                    logEvent(`✅ Joined session: ${data.sessionId} with agent: ${data.agentName}`);
+                });
+
+                socket.on('new_message', (message) => {
+                    displayMessage(message);
+                    logEvent(`📨 New message from ${message.senderName}: ${message.message}`);
+                });
+
+                socket.on('user_joined', (data) => {
+                    logEvent(`👋 User joined: ${data.userId} (${data.userType})`);
+                });
+
+                socket.on('user_left', (data) => {
+                    logEvent(`👋 User left: ${data.userId} (${data.userType})`);
+                });
+
+                socket.on('user_typing', (data) => {
+                    if (data.isTyping) {
+                        logEvent(`✏️ ${data.userName} is typing...`);
+                    } else {
+                        logEvent(`✏️ ${data.userName} stopped typing`);
+                    }
+                });
+
+            } catch (error) {
+                logEvent(`❌ Connection failed: ${error.message}`, 'error');
+            }
+        });
+
+        // Disconnect
+        disconnectBtn.addEventListener('click', () => {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+        });
+
+        // Join Session
+        joinSessionBtn.addEventListener('click', () => {
+            if (!socket || !isConnected) {
+                alert('Please connect to server first');
+                return;
+            }
+
+            const sessionId = sessionIdInput.value.trim();
+            const userId = userIdInput.value.trim();
+            const userName = userNameInput.value.trim();
+            const userType = document.querySelector('input[name="userType"]:checked').value;
+
+            if (!sessionId || !userId) {
+                alert('Please provide Session ID and User ID');
+                return;
+            }
+
+            socket.emit('join_session', {
+                sessionId,
+                userId,
+                userType
+            });
+
+            logEvent(`🔄 Attempting to join session: ${sessionId} as ${userType}`);
+        });
+
+        // Send Message
+        sendMessageBtn.addEventListener('click', () => {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            const userId = userIdInput.value.trim();
+            const userName = userNameInput.value.trim();
+            const userType = document.querySelector('input[name="userType"]:checked').value;
+
+            socket.emit('send_message', {
+                sessionId: currentSessionId,
+                message,
+                senderId: userId,
+                senderName: userName,
+                senderType: userType
+            });
+
+            messageInput.value = '';
+            logEvent(`📤 Message sent: ${message}`);
+        });
+
+        // Display message in chat
+        function displayMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${message.senderType}`;
+            messageElement.innerHTML = `
+                <strong>${message.senderName}</strong> 
+                <span style="font-size: 11px; color: #666;">${new Date(message.timestamp).toLocaleTimeString()}</span><br>
+                ${message.message}
+            `;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Clear functions
+        document.getElementById('clearMessages').addEventListener('click', () => {
+            messagesDiv.innerHTML = '';
+        });
+
+        document.getElementById('clearLog').addEventListener('click', () => {
+            eventLogDiv.textContent = '';
+        });
+
+        // Allow Enter key to send message
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessageBtn.click();
+            }
+        });
+
+        // Initial log
+        logEvent('🚀 Chat Support Test Client initialized');
+        logEvent('💡 Create a session using REST API first, then use the sessionId here');
+    </script>
+</body>
+</html>

@@ -38,26 +38,27 @@ This is a full-stack, real-time chat support application built with a Node.js ba
 
 ### Folder Structure
 
+📦 chat-support-system/
+ ┣ 📂 backend/
+ ┃ ┣ 📂 src/
+ ┃ ┃ ┣ 📂 controllers/    # Handles business logic for routes
+ ┃ ┃ ┣ 📂 middleware/     # Auth, logging, and error handling
+ ┃ ┃ ┣ 📂 models/         # Mongoose schemas for the database
+ ┃ ┃ ┣ 📂 routes/         # API endpoint definitions
+ ┃ ┃ ┗ 📂 utils/          # Logger and socket handler
+ ┃ ┣ 📂 logs/             # Contains app.log file
+ ┃ ┣ 📜 .env.example      # Template for environment variables
+ ┃ ┗ 📜 server.js         # Main server entry point
+ ┃
+ ┣ 📂 frontend/
+ ┃ ┣ 📂 src/
+ ┃ ┃ ┣ 📂 components/     # Reusable React components
+ ┃ ┃ ┣ 📂 pages/          # Page components (Login, AgentChat, etc.)
+ ┃ ┃ ┣ 📂 services/       # API and socket connection logic
+ ┃ ┃ ┗ 📜 styles.css      # Global styles
+ ┃ ┗ 📜 .env.example      # Template for frontend environment variables
 
-/chat-support-system/
-├── backend/
-│   ├── src/
-│   │   ├── controllers/   # Handles business logic for routes
-│   │   ├── middleware/    # Auth, logging, and error handling
-│   │   ├── models/        # Mongoose schemas for the database
-│   │   ├── routes/        # API endpoint definitions
-│   │   └── utils/         # Logger and socket handler
-│   ├── logs/              # Contains app.log file
-│   ├── .env.example       # Template for environment variables
-│   └── server.js          # Main server entry point
-│
-└── frontend/
-├── src/
-│   ├── components/    # Reusable React components
-│   ├── pages/         # Page components (Login, AgentChat, etc.)
-│   ├── services/      # API and socket connection logic
-│   └── styles.css     # Global styles
-└── .env.example       # Template for frontend environment variables
+
 
 ## 💾 Database Schema Overview
 

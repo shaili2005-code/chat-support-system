@@ -89,7 +89,7 @@ To run this project locally, please follow these steps:
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/shaili2005-code/chat-support-system.git](https://github.com/shaili2005-code/chat-support-system.git)
+    git clone [https://github.com/shaili2005-code/chat-support-system.git]
     cd chat-support-system
     ```
 
@@ -129,4 +129,4 @@ To run this project locally, please follow these steps:
 ## 👨‍💻 Author
 
 * **Shaili Nishad**
-* **GitHub:** `[@shaili2005-code](https://github.com/shaili2005-code)`
+* **GitHub:** `(https://github.com/shaili2005-code)`
